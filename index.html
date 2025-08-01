@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Reversed Controls Pong</title>
+  <style>
+    body {
+      background-color: black;
+      margin: 0;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      margin: auto;
+      background-color: #222020;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="pong" width="800" height="500"></canvas>
+  <script>
+    const canvas = document.getElementById("pong");
+    const context = canvas.getContext("2d");
+
+    const paddleWidth = 10,
+          paddleHeight = 100,
+          ballRadius = 8,
+          winningScore = 5;
+
+    const leftPaddle = {
+      x: 0,
+      y: canvas.height / 2 - paddleHeight / 2,
+      width: paddleWidth,
+      height: paddleHeight,
+      dy: 0,
+      speed: 7,
+      score: 0
+    };
+
+    const rightPaddle = {
+      x: canvas.width - paddleWidth,
+      y: canvas.height / 2 - paddleHeight / 2,
+      width: paddleWidth,
+      height: paddleHeight,
+      dy: 0,
+      speed: 5,
+      score: 0
+    };
+
+    const ball = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      radius: ballRadius,
+      speed: 5,
+      dx: 5,
+      dy: 5
+    };
+
+    function drawRect(x, y, w, h, color = "#fff") {
+      context.fillStyle = color;
+      context.fillRect(x, y, w, h);
+    }
+
+    function drawBall(x, y, r, color = "#fff") {
+      context.fillStyle = color;
+      context.beginPath();
+      context.arc(x, y, r, 0, Math.PI * 2);
+      context.closePath();
+      context.fill();
+    }
+
+    function drawScore(text, x, y) {
+      context.fillStyle = "#fff";
+      context.font = "40px Arial";
+      context.fillText(text, x, y);
+    }
+
+    function resetBall() {
+      ball.x = canvas.width / 2;
+      ball.y = canvas.height / 2;
+      ball.speed = 5;
+      ball.dx = (Math.random() < 0.5 ? 1 : -1) * ball.speed;
+      ball.dy = (Math.random() * 4) - 2;
+    }
+
+    function update() {
+      leftPaddle.y += leftPaddle.dy;
+      if (leftPaddle.y < 0) leftPaddle.y = 0;
+      if (leftPaddle.y + leftPaddle.height > canvas.height)
+        leftPaddle.y = canvas.height - leftPaddle.height;
+
+      if (rightPaddle.y + rightPaddle.height / 2 < ball.y) {
+        rightPaddle.y += rightPaddle.speed;
+      } else {
+        rightPaddle.y -= rightPaddle.speed;
+      }
+      if (rightPaddle.y < 0) rightPaddle.y = 0;
+      if (rightPaddle.y + rightPaddle.height > canvas.height)
+        rightPaddle.y = canvas.height - rightPaddle.height;
+
+      ball.x += ball.dx;
+      ball.y += ball.dy;
+
+      if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
+        ball.dy = -ball.dy;
+      }
+
+      if (
+        ball.x - ball.radius < leftPaddle.x + leftPaddle.width &&
+        ball.y > leftPaddle.y &&
+        ball.y < leftPaddle.y + leftPaddle.height
+      ) {
+        ball.dx = -ball.dx;
+        ball.speed += 0.5;
+        ball.dx = ball.dx > 0 ? ball.speed : -ball.speed;
+      }
+
+      if (
+        ball.x + ball.radius > rightPaddle.x &&
+        ball.y > rightPaddle.y &&
+        ball.y < rightPaddle.y + rightPaddle.height
+      ) {
+        ball.dx = -ball.dx;
+        ball.speed += 0.5;
+        ball.dx = ball.dx > 0 ? ball.speed : -ball.speed;
+      }
+
+      if (ball.x - ball.radius < 0) {
+        rightPaddle.score++;
+        resetBall();
+      } else if (ball.x + ball.radius > canvas.width) {
+        leftPaddle.score++;
+        resetBall();
+      }
+    }
+
+    function draw() {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      drawRect(leftPaddle.x, leftPaddle.y, leftPaddle.width, leftPaddle.height);
+      drawRect(rightPaddle.x, rightPaddle.y, rightPaddle.width, rightPaddle.height);
+      drawBall(ball.x, ball.y, ball.radius);
+      drawScore(leftPaddle.score, canvas.width / 4, 50);
+      drawScore(rightPaddle.score, (canvas.width * 3) / 4, 50);
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowUp") {
+        // reversed: pressing ↑ moves paddle **down**
+        leftPaddle.dy = leftPaddle.speed;
+      } else if (e.key === "ArrowDown") {
+        // reversed: pressing ↓ moves paddle **up**
+        leftPaddle.dy = -leftPaddle.speed;
+      }
+    });
+
+    window.addEventListener("keyup", (e) => {
+      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+        leftPaddle.dy = 0;
+      }
+    });
+
+    resetBall();
+    gameLoop();
+  </script>
+</body>
+</html>
